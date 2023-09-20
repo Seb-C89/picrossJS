@@ -1,3 +1,7 @@
+
+const test = () => {
+	alert("TEST");
+}
 //var canvas = document.getElementById("canvas");
 /*	this is because getElementById() can return other type than HTMLCanvasElement like null or whatever.
     So now it can only return HTMLCanvasElement else trow exeption. */
@@ -598,16 +602,28 @@ class Grid {
     }
     onMove(x, y) {
     }
-    saveTilesStates() {
+    getTilesStates() {
         let states = new Array(this.tiles.length);
         for (let i = 0; i < this.states.length; ++i)
             this.states[i]["id"] = i; // add an id property to the colors
         for (let i = 0; i < this.tiles.length; ++i)
             states[i] = this.tiles[i].state["id"];
         console.log("[" + states + "]");
-        for (let i = 0; i < this.colors.length; i++)
-            console.log(this.colors[i].toString());
+        //for (let i = 0; i < this.colors.length; i++)
+            //console.log(this.colors[i].toString());
+		return {
+			states: states,
+			colors: this.colors,
+		}
     }
+	getExportUrl() {
+		let {states, colors} = grid.getTilesStates();
+		let search = new URLSearchParams([
+				["states", states],
+				["colors", colors],
+			]);
+		return document.location.origin + document.location.pathname + "?" + search;
+	}
     increase_vertical(xy) {
         console.log("++y");
         xy.y++;
@@ -709,7 +725,8 @@ canvas.onmousemove = (e) => {
     grid.saveTilesStates();
 }*/
 canvas.oncontextmenu = (e) => {
-    grid.saveTilesStates();
+    let {states, colors} = grid.getTilesStates();
+	console.log(states, colors);
 };
 window.onload = () => {
     // Here, all Image() as completly loaded, and we can draw them on canvas

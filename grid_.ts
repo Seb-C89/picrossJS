@@ -1,3 +1,7 @@
+const test = () => {
+	alert("TEST");
+}
+
 //var canvas = document.getElementById("canvas");
 /*	this is because getElementById() can return other type than HTMLCanvasElement like null or whatever.
 	So now it can only return HTMLCanvasElement else trow exeption. */
