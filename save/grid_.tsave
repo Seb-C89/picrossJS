@@ -1,0 +1,439 @@
+//var canvas = document.getElementById("canvas");
+/*	this is because getElementById() can return other type than HTMLCanvasElement like null or whatever.
+	So now it can only return HTMLCanvasElement else trow exeption. */
+	const getCanvasElementById = (id: string): HTMLCanvasElement => {
+		const canvas = document.getElementById(id); // CHECK BACKWARD COMPABILITY
+	
+		if (!(canvas instanceof HTMLCanvasElement))
+			throw new Error(`The element of id "${id}" is not a HTMLCanvasElement. Make sure a <canvas id="${id}""> element is present in the document.`);
+	
+		return canvas;
+	}
+	
+	//var ctx: = canvas.getContext("2d");
+	/* same as above */
+	const getCanvasRenderingContext2D = (canvas: HTMLCanvasElement): CanvasRenderingContext2D => {
+		const context = canvas.getContext('2d'); // CHECK BACKWARD COMPABILITY
+	
+		if (context === null)
+			throw new Error('This browser does not support 2-dimensional canvas rendering contexts.');
+	
+		return context;
+	}
+	
+	const canvas:HTMLCanvasElement = getCanvasElementById('canvas');
+	const ctx: CanvasRenderingContext2D = getCanvasRenderingContext2D(canvas);
+		//ctx.translate(0.5, 0.5); // Move the canvas by 0.5px to fix blurring
+		//ctx.font = 'bold 48px serif';
+	
+	/*const PNGSpecular:HTMLImageElement = new Image();
+		PNGSpecular.src = 'tile.png';
+	
+	const PNGEmptyTile = new Image();
+		PNGEmptyTile.src = 'tile2.png';*/
+	
+	enum TileState {Blank, Color, Hint}
+	enum Orientation {Vertical, Horizontal}
+
+	function max(array:Array<number>):number {
+			let max:number = -Infinity;
+			for(let i=0; i < array.length; ++i)
+				if(array[i] > max)
+					max = array[i];
+			return max;
+	}
+
+	function min(array:Array<number>):number {
+		let min:number = +Infinity;
+		for(let i=0; i < array.length; ++i)
+			if(array[i] < min)
+				min = array[i];
+		return min;
+	}
+	
+	class Color {
+		//private rgb: string;
+		private r:number;
+		private g:number;
+		private b:number;
+		
+		constructor(r:number, g:number, b:number){
+			this.setRgb(r, g, b);
+		}
+	
+		setRgb(r:number, g:number, b:number):void {
+			//this.rgb = "rgb("+r+","+g+","+b+")";
+			this.r = r;
+			this.g = g;
+			this.b = b;
+		}
+	
+		getRgb():string {
+			return "rgb("+this.r+","+this.g+","+this.b+")";
+		}
+
+		toString():string {
+			return this.r+";"+this.g+";"+this.b;
+		}
+	}
+	
+	class State {
+		readonly state: TileState;
+		readonly color: Color;
+		private next: State;
+	
+		constructor(state:TileState, color:Color, next:State){
+			this.state = state;
+			this.color = color;
+			this.next = next;
+		}
+
+		setNext(next:State):void {
+			this.next = next;
+		}
+	
+		getNext():State {
+			return this.next;
+		}
+	}
+
+	class Tile {
+		state: State;
+		
+		constructor(state:State){
+			this.state = state
+		}
+	
+		nextState():void {
+			this.state = this.state.getNext();
+		}
+	}
+	
+	class Header {
+		public static invalideColor:Color = new Color(255, 0, 0); 
+		public static valideColor:Color = new Color(0, 0, 0);
+		nums:Array<number>;
+		colors:Array<Color>;
+
+		constructor(nums:Array<number>, colors:Array<Color>){
+			this.nums = nums;
+			this.colors = colors;
+		}
+	}
+
+	class Grid {
+		private tiles: Array<Tile>;
+		private nonogram: Array<Tile>;
+		readonly rows: number; // number of rows
+		readonly cols: number; // number of cols
+		readonly size: number; // size in px of a Tile (a Tile is always a square)
+		readonly offsetX: number; // coord of the top left corner of the grid relative to the top left corner of the canvas
+		readonly offsetY: number; // coord of the top left corner of the grid relative to the top left corner of the canvas
+		
+		public colors:Array<Color>; // Contain all different colors avaible for tiles.
+		private backgroundColor:Color;
+		private fontColor:Color;
+
+		private states:Array<State>; // Contain all possible states of a tiles.
+
+		private cols_headers:Array<Header>;
+		private rows_headers:Array<Header>;
+
+		constructor(cols:number, rows:number, size:number, backgroundColor:Color, fontColor:Color, colors:Array<Color>, hintsFollowColors:boolean, states:Array<number>){
+			this.size = size //(size > 0 ? size : 1); // avoid division by 0
+			this.rows = rows //(rows > 0 ? rows : 1); // avoid division by 0
+			this.cols = cols //(cols > 0 ? cols : 1); // avoid division by 0
+			this.colors = colors;
+				this.backgroundColor = backgroundColor;
+				this.fontColor = fontColor;
+
+			//Init the states array
+			this.states = Array(this.colors.length* 2 +1); // same numbers of color and hint (*2). (+1) Because of the blank states.
+				//create the blank state with the background color
+				this.states[0] = new State(TileState.Blank, this.backgroundColor, null);
+
+				// run in decreasing way because each one must refer to an existing one.
+				// with : colorID=this.colors.length-1 (end of the colors array)
+				// with : state=this.states.length-1 (end of the states array)
+				
+				for(let colorID=this.colors.length-1, state=this.states.length-1; colorID >= 0; --colorID, --state){
+						this.states[state] = new State(TileState.Hint, this.colors[colorID], this.states[(state+1)%this.states.length]); // i % length. if we've gone too high, start from `0` again
+						console.log(state +"(hint) linked with "+(state+1)%this.states.length);
+					}
+
+				// with : state=(this.states.length-1)-(colors.length-1) (end of the states array minus the color already attributed)
+
+				for(let colorID=this.colors.length-1, state=this.states.length-1-this.colors.length; colorID >= 0; --colorID, --state){
+						this.states[state] = new State(TileState.Color, this.colors[colorID], this.states[(state+1)%this.states.length]); // i % length. if we've gone too high, start from `0` again
+						console.log(state +"(color) linked with "+(state+1)%this.states.length);
+				}
+
+				this.states['firstColor'] = this.states[1]; // add property to the array
+				this.states['firstHint'] = this.states[this.colors.length]; // add property to the array
+				this.states['lastColor'] = this.states['firstHint']-1; // add property to the array
+				this.states['lastHint'] = this.states.length-1; // add property to the array
+
+				if(hintsFollowColors){
+					//Empty -> Colors -> ... -> Hint -> ... -> Empty
+					this.states[0].setNext(this.states['firstColor']);
+				}
+				else { 
+					//Empty -> nothing (depending of the action)
+					//Colors -> ... -> Empty
+					//Hint -> ...-> Empty
+					this.states[0].setNext(this.states[0]);
+					this.states['lastColor'].setNext(this.states[0]);
+					this.states['lastHint'].setNext(this.states[0]);
+				}
+
+				for(let i=0; i < this.states.length; ++i){
+					console.log(this.states[i]);
+				}		
+			
+			//Init the tiles array
+			this.tiles = Array(rows * cols);
+				if(states.length > 0 && states.length == cols * rows && max(states) < this.states.length && min(states) >= 0){ //check
+					for(let i=0; i <states.length; ++i)
+						this.tiles[i] = new Tile(this.states[states[i]]);
+				}
+				else {
+					for(let i=0; i < this.tiles.length; ++i)
+						this.tiles[i] = new Tile(this.states[0]);
+				}
+
+			//Init headers
+			this.cols_headers = new Array(this.cols);
+			this.rows_headers = new Array(this.rows);
+			for(let i=0; i < this.cols_headers.length; ++i){
+				let numberOfNums = 0;
+				for(let j=0, precedent:State = undefined; j < this.rows_headers.length; ++j){
+					if(this.Index2dToTile(i, j).state.state == TileState.Color){
+						if(this.Index2dToTile(i, j).state != precedent){
+							precedent = this.Index2dToTile(i, j).state;
+							++numberOfNums;
+						}
+					}
+				}
+				console.log("col"+i+":"+numberOfNums);
+				let nums:Array<number> = Array(numberOfNums).fill(0);
+				let colors:Array<Color> = Array(numberOfNums);
+				for(let j=0, k=-1, precedent:State = undefined; j < this.rows_headers.length; ++j){
+					if(this.Index2dToTile(i, j).state.state == TileState.Color){
+						if(this.Index2dToTile(i, j).state != precedent){
+							precedent = this.Index2dToTile(i, j).state;
+							++k;
+							colors[k] = precedent.color;
+							//++nums[k];
+						}
+						/*else	
+							++nums[k];*/
+						++nums[k];
+					}
+				}
+				console.log(nums);
+				this.cols_headers[i] = new Header(nums, colors);
+			}
+			for(let i=0; i < this.cols_headers.length; i++){
+				this.offsetY = 0;
+				if(this.cols_headers[i].nums.length > this.offsetY)
+					this.offsetY = this.cols_headers[i].nums.length;
+			}
+			this.offsetY *= this.size;
+			
+			for(let i=0; i < this.rows_headers.length; ++i){
+				let numberOfNums = 0;
+				for(let j=0, precedent:State = undefined; j < this.cols_headers.length; ++j){
+					if(this.Index2dToTile(j, i).state.state == TileState.Color){
+						if(this.Index2dToTile(j, i).state != precedent){
+							precedent = this.Index2dToTile(j, i).state;
+							++numberOfNums;
+						}
+					}
+				}
+				console.log("col"+i+":"+numberOfNums); 
+				let nums:Array<number> = Array(numberOfNums).fill(0);
+				let colors:Array<Color> = Array(numberOfNums);
+				for(let j=0, k=-1, precedent:State = undefined; j < this.cols_headers.length; ++j){
+					if(this.Index2dToTile(j, i).state.state == TileState.Color){
+						if(this.Index2dToTile(j, i).state != precedent){
+							precedent = this.Index2dToTile(j, i).state;
+							++k;
+							colors[k] = precedent.color;
+							//++nums[k];
+						}
+						/*else	
+							++nums[k];*/
+						++nums[k];
+					}
+				}
+				console.log(nums);
+				this.rows_headers[i] = new Header(nums, colors);
+			}
+			for(let i=0; i < this.cols_headers.length; i++){
+				this.offsetX = 0;
+				if(this.rows_headers[i].nums.length > this.offsetX)
+					this.offsetX = this.rows_headers[i].nums.length;
+			}
+			this.offsetX *= this.size;
+		}
+	
+		 IndexToX(i:number):number {
+			return (i%this.cols)*this.size + this.offsetX;
+		}
+	
+		 IndexToY(i:number):number {
+			return (Math.trunc(i/this.cols))*this.size + this.offsetY;
+		}
+	
+		 XyToTile(x:number, y:number):Tile {
+			return this.tiles[this.XyToIndex(x, y)];
+		}
+	
+		 XyToIndex(x:number, y:number):number {
+			return Math.trunc((x-this.offsetX)/this.size) + Math.trunc((y-this.offsetY)/this.size)*this.cols; // %size
+		}
+
+		 Index2dToIndex(i:number, j:number):number {
+			return i + j*this.cols;
+		}
+
+		 Index2dToTile(i:number, j:number):Tile {
+			return this.tiles[this.Index2dToIndex(i, j)];
+		}
+
+		XyToVerticalHeaderIndex(x:number, y:number):number {
+			return Math.trunc(x/this.size);
+		}
+
+		XyToHorizontalHeaderIndex(x:number, y:number):number {
+			return Math.trunc(y/this.size);
+		}
+
+		XyIsOnGrid(x:number, y:number):boolean {
+			return (x > this.offsetX && y > this.offsetY) && (x < this.IndexToX(this.tiles.length-1)+this.size && y < this.IndexToY(this.tiles.length-1)+this.size);
+		}
+	
+		DrawAll():void { // Draw the entire grid.
+			for(let i=0; i < this.tiles.length; i++)
+				this.DrawTile(i);
+			for(let i=0; i < this.cols_headers.length; i++)
+				this.DrawHeader(i, this.cols_headers);
+			for(let i=0; i < this.rows_headers.length; i++)
+				this.DrawHeader(i, this.rows_headers);
+		}
+	
+		DrawTile(tileID:number):void { // Draw a Tile
+			let tile:Tile = this.tiles[tileID];
+			let x:number = this.IndexToX(tileID);
+			let y:number = this.IndexToY(tileID);
+			
+			switch(tile.state.state){
+				case TileState.Color:
+					ctx.fillStyle = tile.state.color.getRgb();
+					ctx.fillRect(x, y, this.size, this.size);
+					break;
+				case TileState.Blank:
+					ctx.fillStyle = this.backgroundColor.getRgb();
+					ctx.strokeStyle = this.fontColor.getRgb();
+					ctx.fillRect(x, y, this.size, this.size);
+					ctx.strokeRect(x+1, y+1, this.size-2, this.size-2);
+					break;
+				case TileState.Hint:
+					ctx.fillStyle = this.backgroundColor.getRgb();
+					ctx.strokeStyle = tile.state.color.getRgb();
+					ctx.fillRect(x, y, this.size, this.size);
+					ctx.strokeRect(x+1, y+1, this.size-2, this.size-2);
+					break;
+				default :
+					break;
+			}
+		}
+
+		DrawNum(headerID:number, numID:number, headers:Array<Header>):void {
+			let x:number = 0;
+			let y:number = 0;
+			switch(headers){
+				case this.cols_headers:
+					x = this.offsetX + headerID*this.size;
+					y = this.offsetY - (this.cols_headers[headerID].nums.length-numID)*this.size;
+					break;
+				case this.rows_headers:
+					x = this.offsetX - (this.rows_headers[headerID].nums.length-numID)*this.size;
+					y = this.offsetY + headerID*this.size;
+					break;
+				default:
+					break;
+			}
+
+			ctx.fillStyle = headers[headerID].colors[numID].getRgb();
+			ctx.strokeStyle = '#000000';
+			ctx.fillRect(x, y, this.size, this.size);
+			ctx.strokeRect(x+1, y+1, this.size-2, this.size-2);
+			ctx.font = "32px monospace";
+			ctx.textBaseline = "middle";
+			ctx.textAlign = "center";
+			ctx.fillStyle = this.fontColor.getRgb();
+			ctx.fillText(headers[headerID].nums[numID].toString(), x+this.size/2, y+this.size/2, this.size);
+		}
+
+		DrawHeader(headerID:number, headers:Array<Header>):void {
+			// Draw each nums of this header
+			for(let i=0; i < headers[headerID].nums.length; ++i) 
+				this.DrawNum(headerID, i, headers);
+		}
+	
+		onClick(x:number, y:number):void {
+			if(this.XyIsOnGrid(x, y)){
+				let tileID:number = grid.XyToIndex(x, y);
+				this.tiles[tileID].nextState();
+				this.DrawTile(tileID);
+			}
+		}
+
+		onRightClick(x:number, y:number):void {
+
+		}
+
+		save():void {
+			let states:Array<number> = new Array(this.tiles.length);
+			
+			// ADD THE ID TO STATE OBJECT
+			// add an id property to the colors
+			for(let i=0; i < this.states.length; i++)
+				this.states[i]["id"] = i;
+
+			for(let i=0; i < this.tiles.length; i++){
+				states[i] = this.tiles[i].state["id"];
+			}
+			
+			console.log(states);
+			for(let i=0; i < this.colors.length; i++)
+				console.log(this.colors[i].toString());
+		}
+	}
+	
+	const grid:Grid = new Grid(4, 6, 32, new Color(255, 255, 255), new Color(0, 0, 0), [new Color(255, 0, 255), new Color(255, 255, 0), new Color(0, 255, 0)], true, [0, 2, 0, 0, 0, 0, 2, 3, 1, 0, 0, 2, 1, 1, 0, 3, 1, 0, 0, 3, 0, 0, 6, 4]);
+	
+	canvas.onmousedown = (e) => {
+		/* le padding n'est pas pris en compte avec offsetXY */
+		/* if click is outside the grid but in the canvas. so canvas must fit the grid, or XY must be check */
+		grid.onClick(e.offsetX, e.offsetY);
+	}
+
+	canvas.ondblclick = (e) => {
+		grid.save();
+	}
+
+	/*canvas.oncontextmenu = (e) => {
+
+		grid.onRightClick(e.offsetX, e.offsetY);
+	}*/
+	
+	window.onload = () => { // CHECK BACKWARD COMPABILITY
+		// Here, all Image() as completly loaded, and we can draw them on canvas
+			//console.log("index"+grid.Index2dToIndex(3,4));
+			grid.DrawAll();
+			//grid.colors[1].setRgb(0, 0, 255);
+			//grid.DrawAll();
+			//console.log(Header.invalideColor.getRgb());
+	}

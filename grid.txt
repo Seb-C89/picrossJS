@@ -1,0 +1,80 @@
+var canvas = document.getElementById("canvas");
+//canvas.getContext("2d").translate(0.5, 0.5); // Move the canvas by 0.5px to fix blurring
+ctx = canvas.getContext("2d");
+	ctx.font = 'bold 48px serif';
+
+var tile_png = new Image();
+	tile_png.src = 'tile.png';
+
+var empty_png = new Image();
+	empty_png.src = 'tile2.png';
+
+/*var Tile = {
+	checked: false,
+
+	Draw : function(x, y, width, height){
+		console.log(checked);
+		if(checked)
+			ctx.drawImage(tile_png, x, y, width, height);
+		else
+			;
+	}
+}*/
+
+empty_png.onload = () => {
+
+function Color(r, g, b){
+	color = 'rgba('+r+', '+g+', '+b+')';
+}
+
+ETAT = {
+	check: 1,
+	empty: 2,
+	hint: 3
+}
+
+function Tile(color){
+	this.color 
+}
+
+var Grid = {
+	array:[],
+	rows_tiles: 0,
+	cols_tiles: 0,
+	tile_size: 0,
+
+	Init : function(cols, rows, size){
+		array = Array(rows * cols);
+			array.fill(new Tile());
+		tile_size = (size > 0 ? size : tile_png.width);
+		console.log(tile_size);
+		rows_tiles = rows;
+		cols_tiles = cols;
+
+		array.forEach(e => {
+			console.log(e.checked);
+		});
+	},
+
+	Draw : function(){
+		array.forEach((e, i) => {
+			if(e.checked){
+				ctx.drawImage(tile_png, (i%cols_tiles)*tile_size, (Math.trunc(i/cols_tiles))*tile_size, tile_size, tile_size);
+				ctx.fillStyle = 'rgba(102, 204, 0, 0.1)';
+				ctx.fillRect((i%cols_tiles)*tile_size, (Math.trunc(i/cols_tiles))*tile_size, tile_size, tile_size);
+			}
+			else
+				ctx.drawImage(empty_png, (i%cols_tiles)*tile_size, (Math.trunc(i/cols_tiles))*tile_size, tile_size, tile_size);
+		});
+	}
+}
+
+Grid.Init(4, 6, 32);
+Grid.Draw();
+
+canvas.onclick = e =>{
+	console.log(e.x+";"+e.y);
+	console.log(e.x+";"+e.y);
+}
+
+}
