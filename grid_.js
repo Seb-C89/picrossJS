@@ -192,7 +192,7 @@ class Grid {
                 else
                     precedent = this.states[0];
             }
-            console.log("col" + i + ":" + numberOfNums);
+            //console.log("col" + i + ":" + numberOfNums);
             let nums = Array(numberOfNums).fill(0);
             //let colors:Array<Color> = Array(numberOfNums);
             let states = Array(numberOfNums);
@@ -212,7 +212,7 @@ class Grid {
                 else
                     precedent = this.states[0];
             }
-            console.log(nums);
+            //console.log(nums);
             this.cols_headers[i] = new Header(nums /*, colors*/, states, this.increase_vertical, this.XYtoVerticalHeaderID);
         }
         this.offsetY = 0;
@@ -433,7 +433,7 @@ class Grid {
         headers[headerID].check.fill(false);
         console.log("-----");
         for (let i = headers[headerID].XYtoHeaderID_method(coord), currentnum = 0; /*currentnum < headers[headerID].nums.length &&*/ coord.x < this.cols && coord.y < this.rows; i = headers[headerID].XYtoHeaderID_method(end)) {
-            console.log("SEARCH FOR NEXT INDICE");
+            //console.log("SEARCH FOR NEXT INDICE");
             /*start = grid.find(coord.x, coord.y, headers[headerID].increase_method, grid.isSame, grid.getTileStateOfTile, TileState.Color);
             if(start.x < this.cols && start.y < this.rows){
                 end = grid.nextSate(start.x, start.y, headers[headerID].increase_method);
@@ -464,32 +464,32 @@ class Grid {
                         if ((headers[headerID].XYtoHeaderID_method(end) - headers[headerID].XYtoHeaderID_method(start)) == headers[headerID].nums[currentnum]) {
                             headers[headerID].check[currentnum] = true;
                             currentnum++;
-                            console.log("true");
+                            //console.log("true");
                         }
                         else {
-                            console.log("false");
+                            //console.log("false");
                             headers[headerID].check.fill(false);
                             break;
                         }
                     }
                     else {
-                        console.log("false");
+                        //console.log("false");
                         headers[headerID].check.fill(false);
                         break;
                     }
                 }
                 else {
-                    console.log("more");
+                    //console.log("more");
                     headers[headerID].check.fill(false);
                     break;
                 }
             }
             else {
-                console.log("over");
+                //console.log("over");
                 break;
             }
         }
-        console.log("stop");
+        //console.log("stop");
         let validity = true;
         for (var i = 0, n = headers[headerID].check.length; i < n; ++i)
             validity = validity && headers[headerID].check[i];
@@ -608,7 +608,7 @@ class Grid {
             this.states[i]["id"] = i; // add an id property to the colors
         for (let i = 0; i < this.tiles.length; ++i)
             states[i] = this.tiles[i].state["id"];
-        console.log("[" + states + "]");
+        //console.log("[" + states + "]");
         //for (let i = 0; i < this.colors.length; i++)
             //console.log(this.colors[i].toString());
 		return {
@@ -619,17 +619,24 @@ class Grid {
 	getExportUrl() {
 		let {states, colors} = grid.getTilesStates();
 		let search = new URLSearchParams([
-				["states", states],
+				["cols", cols],
+				["rows", rows],
+				["size", size],
+				["backgroundColor", backgroundColor],
+				["fontColor", fontColor],
 				["colors", colors],
+				["hintsFollowColors", hintsFollowColors],
+				["states", states],
+				//["saveStates", saveStates],
 			]);
 		return document.location.origin + document.location.pathname + "?" + search;
 	}
     increase_vertical(xy) {
-        console.log("++y");
+        //console.log("++y");
         xy.y++;
     }
     increase_horizontal(xy) {
-        console.log("++x");
+        //console.log("++x");
         xy.x++;
     }
     compare_TileState(tile, value) {
@@ -652,16 +659,16 @@ class Grid {
     }
     find(fromX, fromY, increase_function, method, compare, avec) {
         let xy = new XY(fromX, fromY);
-        console.log("search");
+        //console.log("search");
         for (; xy.x < this.cols && xy.y < this.rows; increase_function(xy)) {
             if (method(compare(this.Index2dToTile(xy.x, xy.y)), avec)) {
-                console.log("find" + xy.x + ";" + xy.y);
+                //console.log("find" + xy.x + ";" + xy.y);
                 break;
             }
-            else
-                console.log("next" + xy.x + ";" + xy.y);
+            //else
+                //console.log("next" + xy.x + ";" + xy.y);
         }
-        console.log("return" + xy.x + ";" + xy.y);
+        //console.log("return" + xy.x + ";" + xy.y);
         return xy;
     }
     nextSate(fromX, fromY, increase_function) {
@@ -674,6 +681,8 @@ class Grid {
     }
 }
 //const grid:Grid = new Grid(4, 6, 32, new Color(255, 255, 255), new Color(0, 0, 0), [new Color(255, 0, 255), new Color(255, 255, 0), new Color(0, 255, 0)], true, [0, 2, 0, 0, 0, 0, 2, 3, 1, 1, 0, 2, 1, 2, 0, 3, 1, 2, 0, 3, 0, 0, 0, 0], []);
+let search = new URLSearchParams(window.location.search);
+console.log("FROM URL", search.get("states")?.split(','));
 const grid = new Grid(15, 15, 24, new Color(255, 255, 255), new Color(0, 0, 0), [new Color(70, 70, 70)], true, [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], []);
 //const grid:Grid = new Grid(15, 15, 24, new Color(255, 255, 255), new Color(200, 200, 200), [new Color(0, 0, 0)], true, [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,2,1,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,0,1,0,1,1,1,1,0,0,0,0,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0], []);
 //const grid:Grid = new Grid(5, 5, 24, new Color(255, 255, 255), new Color(200, 200, 200), [new Color(0, 0, 0)], true, [0,1,0,0,0,1,1,1,0,1,1,1,1,1,0,1,0,1,0,0,1,0,1,0,0], []);
