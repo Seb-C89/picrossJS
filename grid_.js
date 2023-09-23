@@ -64,13 +64,24 @@ class Color {
         this.setRgb(r, g, b);
     }
     setRgb(r, g, b) {
-        //this.rgb = "rgb("+r+","+g+","+b+")";
         this.r = r;
         this.g = g;
         this.b = b;
     }
+    setRgbtext(text){
+        let [r, g, b] = Array.from(text.split(';'), Number);
+        this.setRgb(r, g, b);
+    }
     getRgb() {
         return "rgb(" + this.r + "," + this.g + "," + this.b + ")";
+    }
+    static fromstringg(text) {
+        let color = new Color;
+            color.setRgbtext(text);
+        return color;
+    }
+    static fromstringgs(text) {
+        return Array.from(text.split(','), Color.fromstringg);;
     }
     toString() {
         return this.r + ";" + this.g + ";" + this.b;
@@ -111,6 +122,7 @@ class Header {
 class Grid {
     constructor(cols, rows, size, backgroundColor, fontColor, colors, hintsFollowColors, nonogramStates, saveStates) {
         this.lastIndexMouseOver = undefined;
+        this.hintsFollowColors = hintsFollowColors;
         this.size = size; //(size > 0 ? size : 1); // avoid division by 0
         this.rows = rows; //(rows > 0 ? rows : 1); // avoid division by 0
         this.cols = cols; //(cols > 0 ? cols : 1); // avoid division by 0
@@ -611,23 +623,41 @@ class Grid {
         //console.log("[" + states + "]");
         //for (let i = 0; i < this.colors.length; i++)
             //console.log(this.colors[i].toString());
-		return {
-			states: states,
-			colors: this.colors,
-		}
+		return states;
+    }
+    getNonogramStates() {
+        let states = new Array(this.nonogram.length);
+        for (let i = 0; i < this.states.length; ++i)
+            this.states[i]["id"] = i; // add an id property to the colors
+        for (let i = 0; i < this.nonogram.length; ++i)
+            states[i] = this.nonogram[i].state["id"];
+		return states;
     }
 	getExportUrl() {
-		let {states, colors} = grid.getTilesStates();
 		let search = new URLSearchParams([
-				["cols", cols],
-				["rows", rows],
-				["size", size],
-				["backgroundColor", backgroundColor],
-				["fontColor", fontColor],
-				["colors", colors],
-				["hintsFollowColors", hintsFollowColors],
-				["states", states],
+				["cols", this.cols],
+				["rows", this.rows],
+				["size", this.size],
+				["backgroundColor", this.backgroundColor],
+				["fontColor", this.fontColor],
+				["colors", this.colors],
+				["hintsFollowColors", this.hintsFollowColors],
+				["states", grid.getTilesStates()],
 				//["saveStates", saveStates],
+			]);
+		return document.location.origin + document.location.pathname + "?" + search;
+	}
+    getProgressUrl() {
+		let search = new URLSearchParams([
+				["cols", this.cols],
+				["rows", this.rows],
+				["size", this.size],
+				["backgroundColor", this.backgroundColor],
+				["fontColor", this.fontColor],
+				["colors", this.colors],
+				["hintsFollowColors", this.hintsFollowColors],
+				["states", grid.getNonogramStates()],
+				["save", grid.getTilesStates()],
 			]);
 		return document.location.origin + document.location.pathname + "?" + search;
 	}
@@ -684,18 +714,21 @@ class Grid {
 let grid;
 try {
 	let search = new URLSearchParams(window.location.search);
-	let cols = search.get("states");
-	let rows = search.get("states");
-	let size = search.get("states");
-	let backgroundColor = search.get("states");
-	let fontColor = search.get("states");
-	let colors = search.get("states");
-	let hintsFollowColors = search.get("states");
-	let nonogramStates = search.get("states");
-	let saveStates = search.get("states");
+	let cols = Number(search.get("cols"));
+	let rows = Number(search.get("rows"));
+	let size = Number(search.get("size"));
+	let backgroundColor = Color.fromstringg(search.get("backgroundColor"));
+	let fontColor = Color.fromstringg(search.get("fontColor"));
+	console.log("colors", search.get("colors"));
+    console.log("fuck", search.get("colors").split(' '));
+    let colors = Array.from(search.get("colors").split(' '), Color.fromstringg);
+	let hintsFollowColors = Boolean(search.get("hintsFollowColors"));
+	let nonogramStates = Array.from(search.get("states").split(','), Number);
+	let saveStates = search.has("save") ? Array.from(search.get("save").split(','), Number) : [];
 	grid = new Grid(cols, rows, size, backgroundColor, fontColor, colors, hintsFollowColors, nonogramStates, saveStates);
-} catch {
-	grid = new Grid(15, 15, 24, new Color(255, 255, 255), new Color(0, 0, 0), [new Color(70, 70, 70)], true, [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], []);
+} catch(e) {
+	console.log(e);
+    grid = new Grid(15, 15, 24, new Color(255, 255, 255), new Color(0, 0, 0), [new Color(70, 70, 70)], true, [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], []);
 }
 //const grid:Grid = new Grid(15, 15, 24, new Color(255, 255, 255), new Color(200, 200, 200), [new Color(0, 0, 0)], true, [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,2,1,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,0,1,0,1,1,1,1,0,0,0,0,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0], []);
 //const grid:Grid = new Grid(5, 5, 24, new Color(255, 255, 255), new Color(200, 200, 200), [new Color(0, 0, 0)], true, [0,1,0,0,0,1,1,1,0,1,1,1,1,1,0,1,0,1,0,0,1,0,1,0,0], []);

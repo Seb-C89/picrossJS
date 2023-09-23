@@ -8,7 +8,10 @@
 
 <canvas id="canvas" width="500" height="500"></canvas>
 <script src="grid_.js"></script>
-<aside>To create a new puzzle, draw something without considering clues.<button onclick="(function(){ document.getElementById('exportURL').value=grid.getExportUrl(); })();">Save as puzzle</button><output id="exportURL"></output></aside>
+<aside>
+	To create a new puzzle, draw something without considering clues.<button onclick="(function(){ document.getElementById('exportURL').value=grid.getExportUrl(); })();">Save as puzzle</button><output id="exportURL"></output><br />
+	To save your progression.<button onclick="(function(){ document.getElementById('progressURL').value=grid.getProgressUrl(); })();">Save progress</button><output id="progressURL"></output>
+</aside>
 
 </body>
 </html>
