@@ -539,9 +539,18 @@ class Grid {
                 break;
             case TileState.Hint:
                 ctx.fillStyle = this.backgroundColor.getRgb();
-                ctx.strokeStyle = tile.state.color.getRgb();
+                ctx.strokeStyle = this.fontColor.getRgb();
                 ctx.fillRect(x, y, this.size, this.size);
                 ctx.strokeRect(x + 1, y + 1, this.size - 2, this.size - 2);
+                ctx.strokeStyle = tile.state.color.getRgb();
+                ctx.beginPath();
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(x+1, y+1);
+                    ctx.lineTo(x + this.size - 2, y + this.size - 2);
+                    ctx.moveTo(x + this.size - 2, y+1);
+                    ctx.lineTo(x+1, y + this.size - 2);
+                    ctx.stroke();
+                ctx.closePath();
                 break;
             default:
                 break;
