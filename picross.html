@@ -5,12 +5,16 @@
 <link rel="stylesheet" type="text/css" href="picross.css">
 </head>
 <body>
-
+<h1>Picross / Nonogram</h1>
+<p>Sur chaque ligne et chaque colonne est indiqué le nombre de case consécutive à colorier.<br />
+	Chaque ensemble de case coloriée peut être précédé ou suivi d'un nombre inconnu de case blanche.<br />
+	Ainsi "2 3" signifie qu'il peut y avoir 0 ou plus de case blanche suivi de 2 cases noires, puis au moins une case blanche, puis 3 cases noires et finilament 0 ou plus de case blanche.</p>
 <canvas id="canvas" width="500" height="500"></canvas>
 <script src="grid_.js"></script>
 <aside>
-	To create a new puzzle, draw something without considering clues.<button onclick="(function(){ document.getElementById('exportURL').innerHTML=grid.getExportUrl().link(grid.getExportUrl()); })();">Save as puzzle</button><br /><output id="exportURL"></output><br />
-	To save your progression.<button onclick="(function(){ document.getElementById('progressURL').innerHTML=grid.getProgressUrl().link(grid.getProgressUrl()); })();">Save progress</button><br /><output id="progressURL"></output>
+	Voici deux liens vous permettant de créer un nouveau puzzle ou de sauvegarder votre progression. Enregistrez les dans vos favoris !<br /><br />
+	Pour créer un puzzle, colorier des cases sans tenir compte des indices : <button onclick="(function(){ document.getElementById('exportURL').innerHTML=grid.getExportUrl().link(grid.getExportUrl()); })();">Sauvegarder comme nouveau puzzle</button><br /><output id="exportURL"></output><br />
+	Sauvegarder votre progression : <button onclick="(function(){ document.getElementById('progressURL').innerHTML=grid.getProgressUrl().link(grid.getProgressUrl()); })();">Sauvegarder ma progression</button><br /><output id="progressURL"></output>
 </aside>
 
 </body>

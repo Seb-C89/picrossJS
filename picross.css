@@ -1,5 +1,12 @@
 canvas {
     margin: 25px;
     padding: 0px;
-    border: 1px dashed red;
+    /*border: 1px dashed red;*/
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+h1 {
+    text-align: center;
 }
