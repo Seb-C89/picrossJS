@@ -652,7 +652,7 @@ class Grid {
 				["fontColor", this.fontColor],
 				["colors", this.colors],
 				["hintsFollowColors", this.hintsFollowColors],
-				["states", grid.getTilesStates()],
+				["states", this.getTilesStates()],
 				//["saveStates", saveStates],
 			]);
 		return document.location.origin + document.location.pathname + "?" + search;
@@ -666,8 +666,8 @@ class Grid {
 				["fontColor", this.fontColor],
 				["colors", this.colors],
 				["hintsFollowColors", this.hintsFollowColors],
-				["states", grid.getNonogramStates()],
-				["save", grid.getTilesStates()],
+				["states", this.getNonogramStates()],
+				["save", this.getTilesStates()],
 			]);
 		return document.location.origin + document.location.pathname + "?" + search;
 	}
